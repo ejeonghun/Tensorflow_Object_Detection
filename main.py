@@ -7,8 +7,67 @@ from pycoral.utils.edgetpu import make_interpreter
 import os
 import serial
 import tkinter as tk
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
-ser = serial.Serial('/dev/ttyACM0', 9600)
+# 아두이노 시리얼 통신 설정
+ser = serial.Serial('/dev/ttyACM0', 9600) 
+
+# 이메일 설정 및 전송 함수 (사용자에게 맞는 설정 필요)
+def send_email(file_path):
+    receiver_email = "wjdgns4019@gmail.com"  # 수신자 이메일 주소
+
+    sender_email = "##########"  # 네이버 발신 이메일
+    sender_password = "###########"  # 네이버 발신 이메일 비밀번호
+
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+    msg['Subject'] = "[경고] (Home CCTV)사람이 인식되었습니다."  # 메일 제목
+
+    body = "현재 사람이 인식된 이벤트가 발생하였습니다!"  # 메일 본문
+    msg.attach(MIMEText(body, 'plain'))
+
+    # 첨부 파일 설정
+    attachment = open(file_path, "rb")
+    p = MIMEBase('application', 'octet-stream')
+    p.set_payload((attachment).read())
+    encoders.encode_base64(p)
+    p.add_header('Content-Disposition', "attachment; filename= %s" % file_path)
+    msg.attach(p)
+
+    # 동영상 스냅샷 촬영 및 첨부
+    video_capture = cv2.VideoCapture(file_path)
+    ret, frame = video_capture.read()
+    video_capture.release()
+
+    # 첨부할 스냅샷 이미지 경로 설정
+    snapshot_path = f"{os.path.splitext(file_path)[0]}.jpg"
+    cv2.imwrite(snapshot_path, frame)
+
+    # 스냅샷 파일 첨부
+    with open(snapshot_path, 'rb') as f:
+        attachment = MIMEBase('application', 'octet-stream')
+        attachment.set_payload(f.read())
+        encoders.encode_base64(attachment)
+        attachment.add_header('Content-Disposition', f'attachment; filename={os.path.basename(snapshot_path)}')
+        msg.attach(attachment)
+
+    # SMTP 세션 생성 및 메일 전송
+    server = smtplib.SMTP_SSL('smtp.naver.com', 465)  # Naver SMTP 서버 주소 및 포트 (SSL 사용)
+    server.login(sender_email, sender_password)
+    server.sendmail(sender_email, receiver_email, msg.as_string())
+    server.quit()
+
+    print(f"Email sent to {receiver_email} with attachment {file_path}")
+
+    # 스냅샷 파일 삭제
+    os.remove(snapshot_path)
+
+
 
 model = "mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite" # MobileNet SSD v2
 label_path = "coco_labels.txt" # COCO labels
@@ -114,9 +173,10 @@ while True:
         video_writer.release()
         video_writer = None
         print(f"Saved video to {video_file_path}")
+        send_email(video_file_path)
 
-    if video_writer:
-        video_writer.write(frame)
+    if video_writer: # 녹화 중인 경우
+        video_writer.write(frame) # 프레임 저장
 
     cv2.imshow('Home CCTV', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'): # 'q' 키를 누르면 종료
