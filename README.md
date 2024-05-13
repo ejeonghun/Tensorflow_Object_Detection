@@ -4,6 +4,8 @@ Tensorflow를 사용한 객체 인식 프로그램
 ## 프로젝트 개요
 Raspberry Pi, Arduino, Google Coral TPU와 웹캠 을 이용하여 실시간으로  “사람(person)” 을 인식하여 사용자에게 알림과 이벤트를 저장하여 주는 인공지능 홈 CCTV 프로젝트
 
+[프로젝트 실행 동영상](https://www.youtube.com/watch?v=WfvgOQHzNRg)
+
 ## 사용 기술
 - Raspberry Pi
 - Google Coral TPU
