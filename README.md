@@ -21,3 +21,4 @@ Raspberry Pi, Arduino, Google Coral TPU와 웹캠 을 이용하여 실시간으�
 
 [포스터 원본](https://github.com/ejeonghun/Tensorflow_Object_Detection/files/15291630/2001481_._.-2.pdf)
 
+[pptx 발표본](https://github.com/user-attachments/files/15945019/2001481_._.pptx)
